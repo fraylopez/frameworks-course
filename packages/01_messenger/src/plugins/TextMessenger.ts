@@ -15,13 +15,13 @@ export default class TextMessenger implements Plugin {
     this.setName(this.messageLoop.bind(this));
   }
 
-  sendMessage(message: Message): void {
-    this.sender.send(message.serialize());
-  }
-
   onData(data: string): void {
     console.log(`${Message.deserialize(data).format()}`);
   };
+
+  private sendMessage(message: Message): void {
+    this.sender.send(message.serialize());
+  }
 
   private setName(callback: () => void): void {
     console.log("Write your name:");
