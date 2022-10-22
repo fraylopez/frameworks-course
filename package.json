@@ -1,0 +1,11 @@
+{
+  "name": "frameworks-course",
+  "repository": "git@github.com:fraylopez/frameworks-course.git",
+  "license": "MIT",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  }
+}
