@@ -20,7 +20,7 @@ export default class TicTacToe implements Plugin {
   }
 
   launch(): void {
-    console.log('Image app launched!');
+    console.log('-- Welcome to TicTacToe --');
     console.log(`${this.board.render()}`);
     this.gameLoop();
   }
@@ -30,10 +30,8 @@ export default class TicTacToe implements Plugin {
     console.log(`${this.board.render()}`);
   };
 
-
   private gameLoop(): void {
     console.log("Your move(01,20,...):");
-    prompt.start();
     prompt.get(["move"], (err, result) => {
       if (err) {
         console.log(err);
@@ -80,17 +78,19 @@ class Board {
   move(coord: Coordinate): void {
     this.pieces[coord.i][coord.j] = `X`;
   }
-  render(): void {
+  render(): string {
+    let board = "";
     for (let i = 0; i < 3; i++) {
       let row = "";
       for (let j = 0; j < 3; j++) {
-        row += this.renderCell(i, j, this.pieces[i][j]);
+        row += this.renderCell(j, this.pieces[i][j]);
       }
-      console.log(row);
+      board += row + "\n";
     }
+    return board;
   }
 
-  private renderCell(i: number, j: number, data?: string): string {
+  private renderCell(j: number, data?: string): string {
     if (j === 0) {
       return `| ${data || " "} |`;
     }
