@@ -15,7 +15,7 @@ export class Core {
   private channels: Map<string, Channel>;
   constructor() {
     this.plugins = [];
-    this.config = {};// default config
+    this.config = { disabledPlugins: [] };// default config
     ensureDirectoryExistence(Core.configDir);
     this.channels = new Map();
   }
@@ -47,7 +47,10 @@ export class Core {
     for (let pluginStr of plugins) {
       const pluginPath = `${Core.pluginDir}/${pluginStr}`;
       const PluginKlass = require(pluginPath).default;
-      this.plugins.push(new PluginKlass());
+      const plugin = new PluginKlass();
+      if (!this.config.disabledPlugins.includes(plugin.name)) {
+        this.plugins.push(new PluginKlass());
+      }
     }
   }
 
@@ -62,7 +65,6 @@ export class Core {
   private launch() {
     console.log('Select app:');
     console.log(this.plugins.map((plugin, index) => `${index + 1}. ${plugin.name}`).join('\n'));
-    prompt.start();
     prompt.get(["option"], (err, result) => {
       if (err) {
         console.log(err);
@@ -74,6 +76,10 @@ export class Core {
   }
 
   private runPlugin(plugin: Plugin) {
+    console.log(``);
+    console.log(`...Launching ${plugin.name}`);
+    console.log(`Close the app with (Ctrl+C)`);
+    console.log(``);
     plugin.launch();
   }
 }
