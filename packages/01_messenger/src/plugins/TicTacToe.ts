@@ -1,32 +1,48 @@
-import { Plugin } from "../core/Plugin";
-import { Sender } from "../core/Sender";
+import { Plugin } from "../core/models/Plugin";
 import prompt from "prompt";
+import { Coordinate } from "./tictactoe/Coordinate";
+import { Board } from "./tictactoe/Board";
+import { MessageController } from "../core/controllers/MessageController";
 
 export default class TicTacToe implements Plugin {
   readonly name = "TicTacToe";
-  private sender!: Sender;
+  private messenger!: MessageController;
   private board!: Board;
 
   constructor() {
     this.board = new Board();
   }
-
-  setup(sender: Sender): void {
-    this.sender = sender;
+  get id(): string {
+    return this.name;
   }
+  setup(messenger: MessageController): void {
+    this.messenger = messenger;
+    this.messenger.createRoom(this.name, (err) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      this.messenger.subscribeToMessages(this.name, this, (err) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+      });
+    });
+  };
 
   sendMessage(move: Coordinate): void {
-    this.sender.send(move.serialize());
-  }
+    this.messenger.sendMessage(this.name, move.toPrimitives());
+  };
 
   launch(): void {
     console.log('-- Welcome to TicTacToe --');
     console.log(`${this.board.render()}`);
     this.gameLoop();
-  }
+  };
 
-  onData(data: string): void {
-    this.board.move(Coordinate.deserialize(data));
+  consume(data: object): void {
+    this.board.move(Coordinate.fromPrimitives(data));
     console.log(`${this.board.render()}`);
   };
 
@@ -53,49 +69,3 @@ export default class TicTacToe implements Plugin {
 
 }
 
-class Coordinate {
-  public i: number;
-  public j: number;
-  constructor(i: string, j: string) {
-    this.i = parseInt(i);
-    this.j = parseInt(j);
-  }
-
-  static deserialize(data: string): Coordinate {
-    return new Coordinate(data.charAt(0), data.charAt(1));
-  }
-
-  serialize(): string {
-    return `${this.i}${this.j}`;
-  }
-}
-
-class Board {
-  private pieces: string[][];
-  constructor() {
-    this.pieces = [[], [], []];
-  }
-  move(coord: Coordinate): void {
-    this.pieces[coord.i][coord.j] = `X`;
-  }
-  render(): string {
-    let board = "";
-    for (let i = 0; i < 3; i++) {
-      let row = "";
-      for (let j = 0; j < 3; j++) {
-        row += this.renderCell(j, this.pieces[i][j]);
-      }
-      board += row + "\n";
-    }
-    return board;
-  }
-
-  private renderCell(j: number, data?: string): string {
-    if (j === 0) {
-      return `| ${data || " "} |`;
-    }
-    else {
-      return ` ${data || " "} |`;
-    }
-  }
-}

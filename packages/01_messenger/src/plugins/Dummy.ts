@@ -1,13 +1,14 @@
-import { Plugin } from "../core/Plugin";
-import { Sender } from "../core/Sender";
-import prompt from "prompt";
+import { MessageController } from "../core/controllers/MessageController";
+import { Plugin } from "../core/models/Plugin";
+import { Consumer } from "../core/services/Consumer";
 
-export default class Dummy implements Plugin {
+export default class Dummy implements Plugin, Consumer {
   readonly name = "Dummy";
-
-  setup(_sender: Sender): void {
-    //TODO: implement
+  get id(): string {
+    return this.name;
   }
+
+  setup(_messenger: MessageController): void { /*  */ }
 
   launch(): void {
     console.log('-- Welcome to DummyApp --');
@@ -15,7 +16,5 @@ export default class Dummy implements Plugin {
     setInterval(() => { }, 1000);
   }
 
-  onData(_data: string): void {
-    //TODO: implement
-  };
+  consume(_data: object): void {/*  */ };
 };

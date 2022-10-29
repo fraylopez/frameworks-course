@@ -1,26 +1,64 @@
-import { Plugin } from "../core/Plugin";
-import { Sender } from "../core/Sender";
-import prompt from "prompt";
+import { Plugin } from "../core/models/Plugin";
+import prompt, { message } from "prompt";
+import { TextMessage } from "./text-messenger/TextMessage";
+import { PubSub } from "../core/services/PubSub";
+import { MessageController } from "../core/controllers/MessageController";
 
 export default class TextMessenger implements Plugin {
   readonly name = "TextMessenger";
-  private sender!: Sender;
+  private messenger!: MessageController;
+  private room!: string;
   private username!: string;
-  setup(sender: Sender): void {
-    this.sender = sender;
+
+  get id(): string {
+    return this.username;
   }
 
-  launch(): void {
+  setup(messenger: MessageController): void {
+    this.messenger = messenger;
+  }
+
+  launch() {
     console.log('-- Welcome to TextMessenger --');
-    this.setName(this.messageLoop.bind(this));
+    this.joinRoom(() => {
+      this.setName(() => {
+        this.messenger.subscribeToMessages(
+          this.room,
+          this,
+          (err) => {
+            if (err) {
+              console.log(err);
+              return;
+            }
+            this.messageLoop();
+          });
+      });
+    });
   }
 
-  onData(data: string): void {
-    console.log(`${Message.deserialize(data).format()}`);
+  consume(data: object): void {
+    const message = TextMessage.fromPrimitives(data);
+    if (message.from !== this.username) {
+      console.log(`${message.format()}`);
+    }
   };
 
-  private sendMessage(message: Message): void {
-    this.sender.send(message.serialize());
+  private sendMessage(message: TextMessage): void {
+    void this.messenger.sendMessage(this.room, message.toPrimitives());
+  }
+
+  private joinRoom(callback: () => void): void {
+    console.log("Create or join a room:");
+    prompt.start();
+    prompt.get(["room"], (err, result) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      this.room = result.room.toString();
+      console.log(`Joined to: ${this.room}`);
+      callback();
+    });
   }
 
   private setName(callback: () => void): void {
@@ -38,35 +76,14 @@ export default class TextMessenger implements Plugin {
   }
 
   private messageLoop(): void {
-    console.log("Write your message:");
-    prompt.start();
     prompt.get(["message"], (err, result) => {
       if (err) {
         console.log(err);
         return;
       }
-      this.sendMessage(new Message(this.username, result.message.toString()));
+      this.sendMessage(new TextMessage(this.username, result.message.toString()));
       this.messageLoop();
     });
   }
 }
 
-class Message {
-  constructor(
-    public from: string,
-    public text: string,
-  ) { }
-
-  static deserialize(data: string): Message {
-    const message = JSON.parse(data) as Message;
-    return new Message(message.from, message.text);
-  }
-
-  serialize(): string {
-    return JSON.stringify(this);
-  }
-
-  format(): string {
-    return `          Message from ${this.from}: ${this.text}`;
-  }
-}
