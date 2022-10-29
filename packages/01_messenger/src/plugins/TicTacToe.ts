@@ -8,12 +8,13 @@ export default class TicTacToe implements Plugin {
   readonly name = "TicTacToe";
   private messenger!: MessageController;
   private board!: Board;
-
+  private uid: string;
   constructor() {
     this.board = new Board();
+    this.uid = Math.random().toString(36).substring(7);
   }
   get id(): string {
-    return this.name;
+    return this.uid;
   }
   setup(messenger: MessageController): void {
     this.messenger = messenger;
@@ -42,12 +43,18 @@ export default class TicTacToe implements Plugin {
   };
 
   consume(data: object): void {
-    this.board.move(Coordinate.fromPrimitives(data));
+    const coordinate = Coordinate.fromPrimitives(data);
+    const isMyMove = this.board.isOccupied(coordinate, "X");
+    if (!isMyMove) {
+      this.board.move(Coordinate.fromPrimitives(data), "O");
+      this.gameLoop();
+    }
     console.log(`${this.board.render()}`);
   };
 
   private gameLoop(): void {
     console.log("Your move(01,20,...):");
+    prompt.start();
     prompt.get(["move"], (err, result) => {
       if (err) {
         console.log(err);
@@ -59,11 +66,11 @@ export default class TicTacToe implements Plugin {
           result.move.toString().charAt(1)
         )
       );
-      this.gameLoop();
     });
   }
 
   private move(move: Coordinate): void {
+    this.board.move(move, "X");
     this.sendMessage(move);
   }
 

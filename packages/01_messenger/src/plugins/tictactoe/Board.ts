@@ -1,12 +1,16 @@
 import { Coordinate } from "./Coordinate";
 
 export class Board {
+
   private pieces: string[][];
   constructor() {
     this.pieces = [[], [], []];
   }
-  move(coord: Coordinate): void {
-    this.pieces[coord.i][coord.j] = `X`;
+  move(coord: Coordinate, color: string): void {
+    this.pieces[coord.i][coord.j] = color;
+  }
+  isOccupied(coord: Coordinate, color: string) {
+    return this.pieces[coord.i][coord.j] === color;
   }
   render(): string {
     let board = "";
